@@ -1,4 +1,4 @@
-import { Box, Heading, Button, Input, VStack, Text, useToast } from "@chakra-ui/react";
+import { Box, Heading, Button, Input, VStack, Text } from "@chakra-ui/react";
 import { useRef, useState } from "react";
 
 export default function Dashboard() {
@@ -6,60 +6,56 @@ export default function Dashboard() {
   const [file, setFile] = useState(null);
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(false);
-  const toast = useToast();
+  const [alert, setAlert] = useState(null);
   const fileInput = useRef();
 
   // Replace below with real API endpoint
   const API_URL = process.env.REACT_APP_API_URL || "https://your-backend.com";
 
+  const showAlert = (type, title, description) => {
+    setAlert({ type, title, description });
+    setTimeout(() => setAlert(null), 4000);
+  };
+
+  const getAlertColors = (type) => {
+    switch (type) {
+      case 'success':
+        return { bg: '#C6F6D5', border: '#68D391', color: '#22543D' };
+      case 'error':
+        return { bg: '#FED7D7', border: '#FC8181', color: '#742A2A' };
+      case 'warning':
+        return { bg: '#FEFCBF', border: '#F6E05E', color: '#744210' };
+      case 'info':
+      default:
+        return { bg: '#BEE3F8', border: '#63B3ED', color: '#2A4365' };
+    }
+  };
+
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       setFile(selectedFile);
-      toast({
-        title: "File Selected",
-        description: `${selectedFile.name} is ready for upload`,
-        status: "info",
-        duration: 2000,
-        isClosable: true,
-      });
+      showAlert("info", "File Selected", `${selectedFile.name} is ready for upload`);
     }
   };
 
   const handleUpload = async () => {
     if (!file || !location) {
-      toast({
-        title: "Missing Information",
-        description: "Please enter your hospital location and upload an inventory file before generating a plan.",
-        status: "warning",
-        duration: 4000,
-        isClosable: true,
-      });
+      showAlert("warning", "Missing Information", "Please enter your hospital location and upload an inventory file before generating a plan.");
       return;
     }
 
     // Validate file type
     if (file && !file.name.match(/\.(csv|xlsx|xls|json)$/i)) {
-      toast({
-        title: "Invalid File Type",
-        description: "Please upload a CSV, Excel, or JSON file.",
-        status: "error",
-        duration: 4000,
-        isClosable: true,
-      });
+      showAlert("error", "Invalid File Type", "Please upload a CSV, Excel, or JSON file.");
       return;
     }
 
     setLoading(true);
+    setAlert(null);
     
     try {
-      toast({
-        title: "Generating Plan",
-        description: "Processing your inventory data...",
-        status: "info",
-        duration: 2000,
-        isClosable: true,
-      });
+      showAlert("info", "Generating Plan", "Processing your inventory data...");
 
       // Demo: Replace with real API call
       const payload = { location: location, inventory: "file-content" };
@@ -72,21 +68,9 @@ export default function Dashboard() {
         briefing: "AI-generated surge plan summary based on your location and inventory data." 
       });
       
-      toast({
-        title: "Plan Generated Successfully",
-        description: "Your surge plan is ready for review.",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
+      showAlert("success", "Plan Generated Successfully", "Your surge plan is ready for review.");
     } catch (error) {
-      toast({
-        title: "Generation Failed",
-        description: "There was an error generating your surge plan. Please try again.",
-        status: "error",
-        duration: 4000,
-        isClosable: true,
-      });
+      showAlert("error", "Generation Failed", "There was an error generating your surge plan. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -97,6 +81,22 @@ export default function Dashboard() {
       <Heading color="#0093d5" mb={4}>
         Dashboard
       </Heading>
+      
+      {alert && (
+        <Box
+          mb={4}
+          p={4}
+          borderRadius="md"
+          border="1px solid"
+          bg={getAlertColors(alert.type).bg}
+          borderColor={getAlertColors(alert.type).border}
+          color={getAlertColors(alert.type).color}
+        >
+          <Text fontWeight="bold" mb={1}>{alert.title}</Text>
+          <Text fontSize="sm">{alert.description}</Text>
+        </Box>
+      )}
+      
       <VStack spacing={4} align="stretch">
         <Input
           placeholder="Enter your hospital location (city or lat,lon)"
