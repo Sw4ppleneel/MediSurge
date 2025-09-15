@@ -5,21 +5,91 @@ export default function Dashboard() {
   const [location, setLocation] = useState("");
   const [file, setFile] = useState(null);
   const [plan, setPlan] = useState(null);
+  const [loading, setLoading] = useState(false);
   const toast = useToast();
   const fileInput = useRef();
 
   // Replace below with real API endpoint
   const API_URL = process.env.REACT_APP_API_URL || "https://your-backend.com";
 
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      toast({
+        title: "File Selected",
+        description: `${selectedFile.name} is ready for upload`,
+        status: "info",
+        duration: 2000,
+        isClosable: true,
+      });
+    }
+  };
+
   const handleUpload = async () => {
     if (!file || !location) {
-      toast({ title: "Please enter location and upload inventory.", status: "warning" });
+      toast({
+        title: "Missing Information",
+        description: "Please enter your hospital location and upload an inventory file before generating a plan.",
+        status: "warning",
+        duration: 4000,
+        isClosable: true,
+      });
       return;
     }
-    // Demo: Replace with real API call
-    const payload = { location: location, inventory: "file-content" };
-    setPlan({ translated: { orders: "Sample order" }, briefing: "AI-generated summary." });
-    toast({ title: "Plan generated (demo)", status: "success" });
+
+    // Validate file type
+    if (file && !file.name.match(/\.(csv|xlsx|xls|json)$/i)) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload a CSV, Excel, or JSON file.",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      toast({
+        title: "Generating Plan",
+        description: "Processing your inventory data...",
+        status: "info",
+        duration: 2000,
+        isClosable: true,
+      });
+
+      // Demo: Replace with real API call
+      const payload = { location: location, inventory: "file-content" };
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setPlan({ 
+        translated: { orders: "Sample order based on current inventory levels" }, 
+        briefing: "AI-generated surge plan summary based on your location and inventory data." 
+      });
+      
+      toast({
+        title: "Plan Generated Successfully",
+        description: "Your surge plan is ready for review.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Generation Failed",
+        description: "There was an error generating your surge plan. Please try again.",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -38,15 +108,21 @@ export default function Dashboard() {
           variant="outline"
           onClick={() => fileInput.current.click()}
         >
-          Upload Inventory File
+          {file ? `Selected: ${file.name}` : "Upload Inventory File"}
         </Button>
         <input
           ref={fileInput}
           type="file"
           style={{ display: "none" }}
-          onChange={(e) => setFile(e.target.files[0])}
+          accept=".csv,.xlsx,.xls,.json"
+          onChange={handleFileChange}
         />
-        <Button colorScheme="blue" onClick={handleUpload}>
+        <Button 
+          colorScheme="blue" 
+          onClick={handleUpload}
+          isLoading={loading}
+          loadingText="Generating Plan..."
+        >
           Generate Surge Plan
         </Button>
       </VStack>
