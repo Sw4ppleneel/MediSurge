@@ -1,34 +1,34 @@
 # 🎉 Your Surge Planner API is Deployed!
 
-## 🚀 Deployment Complete
+## 🚀 Deployment Complete - ✅ NO MORE CRASHES!
 
-Your Surge Planner API has been successfully deployed to Vercel!
+Your Surge Planner API has been successfully deployed to Vercel and the serverless function is working!
 
-**Latest Deployment URL:** https://surge-planner-n1prz18zt-sw4ppleneels-projects.vercel.app
+**Latest Deployment URL:** https://medi-surge-npboypnf8-sw4ppleneels-projects.vercel.app
 
-## ⚠️ Important: Disable Deployment Protection
+## ⚠️ IMPORTANT: Disable Deployment Protection
 
-Your API currently has Vercel's deployment protection enabled, which requires authentication to access. To make your API publicly accessible, you need to disable this protection:
+Your API is working but has Vercel's deployment protection enabled. To make it publicly accessible:
 
 ### How to Disable Protection:
 
 1. **Go to your Vercel Dashboard:**
    - Visit: https://vercel.com/dashboard
-   - Find your `surge-planner` project
+   - Find your `medi-surge` project (new project name)
 
 2. **Open Project Settings:**
-   - Click on your `surge-planner` project
+   - Click on your `medi-surge` project
    - Go to **Settings** tab
-   - Look for **"Deployment Protection"** section
+   - Look for **"Deployment Protection"** or **"Security"** section
 
 3. **Disable Protection:**
    - Turn OFF "Vercel Authentication"
    - Turn OFF "Password Protection" 
    - Save changes
 
-4. **Redeploy (if needed):**
-   - Your changes should take effect immediately
-   - If not, run: `npx vercel --prod` to redeploy
+4. **Test it works:**
+   - Try: `curl https://medi-surge-npboypnf8-sw4ppleneels-projects.vercel.app/`
+   - Should return: `{"status":"healthy","service":"Surge Planner API","platform":"Vercel"}`
 
 ## 🧪 Test Your API
 
@@ -36,15 +36,15 @@ After disabling protection, test these endpoints:
 
 ```bash
 # Health check
-curl https://surge-planner-n1prz18zt-sw4ppleneels-projects.vercel.app/
+curl https://medi-surge-npboypnf8-sw4ppleneels-projects.vercel.app/
 
 # Signup
-curl -X POST https://surge-planner-n1prz18zt-sw4ppleneels-projects.vercel.app/auth/signup \
+curl -X POST https://medi-surge-npboypnf8-sw4ppleneels-projects.vercel.app/auth/signup \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"test123","hospitalName":"Test Hospital"}'
 
 # Login  
-curl -X POST https://surge-planner-n1prz18zt-sw4ppleneels-projects.vercel.app/auth/login \
+curl -X POST https://medi-surge-npboypnf8-sw4ppleneels-projects.vercel.app/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"test123"}'
 ```
@@ -62,7 +62,7 @@ Update your React app to use the new API URL:
 
 1. **Edit** `surge/.env.production`:
 ```bash
-REACT_APP_API_URL=https://surge-planner-n1prz18zt-sw4ppleneels-projects.vercel.app
+REACT_APP_API_URL=https://medi-surge-npboypnf8-sw4ppleneels-projects.vercel.app
 ```
 
 2. **Deploy your React app** (optional):

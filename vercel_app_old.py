@@ -1,4 +1,4 @@
-# vercel_app.py - Simplified Vercel-compatible FastAPI app
+# vercel_app.py - Vercel-compatible FastAPI app
 import os
 import sys
 import json
@@ -9,29 +9,44 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
-# Basic FastAPI app that always works
-from fastapi import FastAPI
-
-app = FastAPI(title="Surge Planner API")
-
-@app.get("/")
-def health():
-    return {"status": "healthy", "service": "Surge Planner API", "platform": "Vercel"}
-
-# Try to import and set up full functionality
 try:
-    from fastapi import Depends, HTTPException, status
+    from fastapi import FastAPI, Depends, HTTPException, status
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
     from sqlalchemy.orm import Session
-    from pydantic import BaseModel
+    from pydantic import BaseModel, EmailStr
     
     # Import our modules
     from surge_planner import build_multiplier_plan, apply_multipliers, make_human_nlg
     from database import get_db, create_tables, User, SurgePlan
     from auth import hash_password, verify_password, create_access_token, verify_token
     
-    # Set up CORS
+    IMPORTS_SUCCESS = True
+except Exception as e:
+    print(f"Import error: {e}")
+    IMPORTS_SUCCESS = False
+    # Minimal imports for error handling
+    from fastapi import FastAPI
+    FastAPI, HTTPException, status = FastAPI, Exception, 500
+
+app = FastAPI(title="Surge Planner API")
+
+# Basic health check (always works)
+@app.get("/")
+def health():
+    if not IMPORTS_SUCCESS:
+        return {
+            "status": "error", 
+            "message": "Service initialization failed - check imports and dependencies",
+            "platform": "Vercel"
+        }
+    return {"status": "healthy", "service": "Surge Planner API", "platform": "Vercel"}
+
+# Only add complex routes if imports succeeded
+if IMPORTS_SUCCESS:
+    security = HTTPBearer()
+
+    # CORS (configured for Vercel)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],  # In production, replace with your domain
@@ -39,9 +54,7 @@ try:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
-    security = HTTPBearer()
-    
+
     # Initialize database tables
     try:
         create_tables()
@@ -49,15 +62,15 @@ try:
     except Exception as e:
         print(f"Database initialization warning: {e}")
     
-    # Pydantic models
+    # Pydantic models for request/response
     class UserSignup(BaseModel):
-        email: str
+        email: EmailStr
         password: str
         hospitalName: str
         location: str = None
 
     class UserLogin(BaseModel):
-        email: str
+        email: EmailStr
         password: str
 
     class PlanRequest(BaseModel):
@@ -243,23 +256,3 @@ try:
             "briefing": plan.briefing,
             "created_at": plan.created_at
         }
-
-    print("✅ Full Surge Planner API loaded successfully")
-
-except Exception as e:
-    print(f"❌ Error loading full API functionality: {e}")
-    
-    # Add a simple error endpoint
-    @app.get("/error")
-    def get_error():
-        return {"error": str(e), "message": "API partially loaded - some features may not work"}
-
-# For debugging
-@app.get("/debug")
-def debug_info():
-    return {
-        "python_path": sys.path,
-        "current_dir": current_dir,
-        "env_vars": dict(os.environ),
-        "files_in_current_dir": os.listdir(current_dir) if os.path.exists(current_dir) else "Directory not found"
-    }
