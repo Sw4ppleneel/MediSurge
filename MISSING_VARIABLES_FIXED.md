@@ -18,8 +18,8 @@
 ## ✅ What Was Fixed:
 
 ### Environment Variables Now Set:
-1. **`SECRET_KEY`** = `3ef934b7ec13d0604a8c2d478b5045c4cf57313bbf7ca952a4b8fade38a21cd0`
-2. **`OPENROUTER_API_KEY`** = `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`
+
+
 3. **`ENVIRONMENT`** = `production`
 
 ### Code Analysis:
