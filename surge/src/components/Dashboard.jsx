@@ -9,6 +9,9 @@ export default function Dashboard() {
   const [alert, setAlert] = useState(null);
   const fileInput = useRef();
 
+  // API endpoint - update this with your backend URL
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+
   const showAlert = (type, title, description) => {
     setAlert({ type, title, description });
     setTimeout(() => setAlert(null), 4000);
@@ -54,20 +57,63 @@ export default function Dashboard() {
     try {
       showAlert("info", "Generating Plan", "Processing your inventory data...");
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Read file content
+      const fileContent = await readFileContent(file);
       
-      setPlan({ 
-        translated: { orders: "Sample order based on current inventory levels" }, 
-        briefing: "AI-generated surge plan summary based on your location and inventory data." 
+      // Prepare payload for API
+      const payload = {
+        location: location,
+        inventory: fileContent,
+        baselines: {} // Add baseline data if needed
+      };
+
+      // Call the actual API with authentication
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${API_BASE_URL}/plan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
       });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      setPlan(result);
       
       showAlert("success", "Plan Generated Successfully", "Your surge plan is ready for review.");
     } catch (error) {
-      showAlert("error", "Generation Failed", "There was an error generating your surge plan. Please try again.");
+      console.error('API Error:', error);
+      showAlert("error", "Generation Failed", `Error: ${error.message}. Please try again.`);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to read file content
+  const readFileContent = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const content = e.target.result;
+          // Try to parse as JSON, otherwise return as text
+          if (file.name.endsWith('.json')) {
+            resolve(JSON.parse(content));
+          } else {
+            resolve(content);
+          }
+        } catch (error) {
+          resolve(content); // Return as text if JSON parsing fails
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
   };
 
   return (

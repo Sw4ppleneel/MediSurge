@@ -1,3 +1,7 @@
 fastapi
 uvicorn
 requests
+sqlalchemy
+bcrypt
+python-jose[cryptography]
+python-multipart

@@ -1,4 +1,6 @@
-# api/plan.py
+# Production configuration for deployment
+import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -6,7 +8,6 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import json
 import sys
-import os
 
 # Add parent directory to path to import modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,21 +16,35 @@ from surge_planner import build_multiplier_plan, apply_multipliers, make_human_n
 from database import get_db, create_tables, User, SurgePlan
 from auth import hash_password, verify_password, create_access_token, verify_token
 
-app = FastAPI(title="Surge Planner API")
+# Lifespan event handler (modern FastAPI approach)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    print("Creating database tables...")
+    create_tables()
+    print("Database tables created successfully!")
+    yield
+    # Shutdown
+    print("Application shutting down...")
+
+app = FastAPI(
+    title="Surge Planner API",
+    description="Hospital Surge Planning API with Authentication",
+    version="1.0.0",
+    lifespan=lifespan
+)
 security = HTTPBearer()
 
-# CORS (open for testing; lock down origins in prod)
+# CORS Configuration for production
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Create database tables on startup
-@app.on_event("startup")
-def startup_event():
-    create_tables()
 
 # Pydantic models for request/response
 from pydantic import BaseModel, EmailStr
@@ -71,8 +86,14 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 
 @app.get("/")
 def health():
-    return {"ok": True}
+    return {
+        "status": "healthy",
+        "service": "Surge Planner API",
+        "version": "1.0.0",
+        "environment": os.getenv("ENVIRONMENT", "development")
+    }
 
+# ... (rest of your endpoints remain the same)
 # Authentication endpoints
 @app.post("/auth/signup")
 def signup(user_data: UserSignup, db: Session = Depends(get_db)):
@@ -232,23 +253,23 @@ def get_plan(plan_id: int, current_user: User = Depends(get_current_user), db: S
         "created_at": plan.created_at
     }
 
-# Main execution block to run the server
+# Main execution block
 if __name__ == "__main__":
     import uvicorn
     
-    # Create database tables on startup
-    print("Creating database tables...")
-    create_tables()
-    print("Database tables created successfully!")
+    # Get environment variables
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", 8000))
+    reload = os.getenv("ENVIRONMENT", "development") == "development"
     
-    # Start the server
-    print("Starting Surge Planner API server on http://localhost:8000")
-    print("API Documentation available at: http://localhost:8000/docs")
+    print(f"Starting Surge Planner API server on http://{host}:{port}")
+    print(f"API Documentation available at: http://{host}:{port}/docs")
+    print(f"Environment: {os.getenv('ENVIRONMENT', 'development')}")
     
     uvicorn.run(
-        "api.plan:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
+        "app:app" if __name__ != "__main__" else "__main__:app",
+        host=host,
+        port=port,
+        reload=reload,
         log_level="info"
     )

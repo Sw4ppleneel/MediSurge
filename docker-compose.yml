@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  surge-planner-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=sqlite:///./data/surge_planner.db
+      - SECRET_KEY=your-super-secure-secret-key-change-in-production
+      - ALLOWED_ORIGINS=http://localhost:3000,https://yourdomain.com
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Add a reverse proxy like nginx
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - surge-planner-api
+    restart: unless-stopped
+
+volumes:
+  data:
