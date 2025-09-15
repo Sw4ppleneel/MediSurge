@@ -9,9 +9,6 @@ export default function Dashboard() {
   const [alert, setAlert] = useState(null);
   const fileInput = useRef();
 
-  // Replace below with real API endpoint
-  const API_URL = process.env.REACT_APP_API_URL || "https://your-backend.com";
-
   const showAlert = (type, title, description) => {
     setAlert({ type, title, description });
     setTimeout(() => setAlert(null), 4000);
@@ -57,9 +54,6 @@ export default function Dashboard() {
     try {
       showAlert("info", "Generating Plan", "Processing your inventory data...");
 
-      // Demo: Replace with real API call
-      const payload = { location: location, inventory: "file-content" };
-      
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       
