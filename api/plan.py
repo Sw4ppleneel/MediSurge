@@ -17,7 +17,7 @@ from auth import hash_password, verify_password, create_access_token, verify_tok
 
 app = FastAPI(title="Surge Planner API")
 security = HTTPBearer()
-
+#i died.
 # CORS (open for testing; lock down origins in prod)
 app.add_middleware(
     CORSMiddleware,
